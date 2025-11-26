@@ -4,6 +4,149 @@ Supaprastinta **blokų grandinė**, imituojanti UTXO modelį, transakcijų atran
 
 ---
 
+# Blockchain papildoma
+
+## Turinys
+
+- [Libbitcoin diegimas]()
+- [Merkle.cpp failo sukūrimas]()
+- [Kompiliavimas ir klaidų taisymas]()
+- [Bitcoin bloko #100000 testavimas]()
+- [create_merkle integravimas į Python blockchain projektą]()
+- [Naudotos nuotraukos]()
+
+---
+
+## Libbitcoin diegimas
+
+Kadangi mano kompiuteryje Windows, tai turėjau per "Turn Windows features on or off" įjungti "Windows Subsystem for Linux".
+
+Tada atsisiunčiau "Ubuntu 22.04.5 LTS".
+
+Pirmą kartą paleidžiant Ubuntu:
+
+- sistema paprašė susikurti naudotojo vardą, ir slaptažodį.
+
+Kai paruošiau terminalą, į jį suvedžiau:
+
+```bash
+sudo apt update
+sudo apt install build-essential autoconf automake libtool pkg-config git wget -y
+```
+
+```bash
+wget https://raw.githubusercontent.com/libbitcoin/libbitcoin/version3/install.sh
+chmod +x install.sh
+```
+
+```bash
+./install.sh --prefix=$HOME/libbitcoin --build-boost --disable-shared
+```
+
+---
+
+## Merkle.cpp failo sukūrimas
+
+Kad pratestuoti duotą kodą, sukūriau atskirą aplankalą Merkle testui:
+
+```bash
+mkdir ~/libbitcoin-merkle
+cd ~/libbitcoin-merkle
+```
+
+Tam folder'yje sukūriau failą:
+
+```bash
+nano merkle.cpp
+```
+
+ir įkėliau užduotyje pateiktą c++ kodą.
+
+---
+
+## Kompiliavimas ir klaidų taisymas
+
+Pirmas bandymas kompiliuoti:
+
+```bash
+g++ -std=c++11 merkle.cpp $(pkg-config --cflags --libs libbitcoin-system) -o merkle_test
+```
+
+Klaida:
+
+```bash
+error: ‘system’ is not a namespace-name
+namespace bc = libbitcoin::system;
+```
+
+Kad pataisyti, turėjau ištrinti ::system ir pailikti:
+
+```bash
+namespace bc = libbitcoin;
+```
+
+Po pataisymo kodas sėkmingai veikė.
+
+---
+
+## c++ implemintavimas
+
+Užduotyje pateiktą c++ create_merkle() funkciją perrašiau į Python, bet su AI pagalba perrašiau prie blockchain projekto:
+
+- vietoj SHA256 naudojame mūsų aes_hashing()
+- vietoj libbitcoin – paprastas sąrašas
+
+Galutinė Python versija:
+
+```bash
+from src.hashing import aes_hashing
+
+def calculate_merkle_root(transactions):
+    merkle = [tx.transaction_id for tx in transactions]
+    if not merkle:
+        return None
+    while len(merkle) > 1:
+        if len(merkle) % 2 != 0:
+            merkle.append(merkle[-1])
+        new_level = []
+        for i in range(0, len(merkle), 2):
+            left = bytes.fromhex(merkle[i])
+            right = bytes.fromhex(merkle[i+1])
+            combined = left + right
+            new_level.append(aes_hashing(combined).hex())
+        merkle = new_level
+    return merkle[0]
+```
+
+---
+
+## Bitcoin bloko 100000 patikrinimas
+
+Kad patikrinti kodą su originaliais bitcoin blokais šiame tinklapyje - https://bitaps.com/100000
+Įkėliau 4 tranzakcijų hash ir tada paleidau programą, bet pirmą kartą paleidus rezultatas nesutapo su originaliu Merkle root.
+
+<div align="center">
+  <img src="https://github.com/NikaBukolovaite/Blockchain_Blockchain/blob/0cee6598fa6e569a3a6f64a41375377524a6ebdf/imagines/Screenshot%202025-11-05%20234916.png" alt="sequential_block_output.txt ištrauka" width="380" />
+  <img src="https://github.com/NikaBukolovaite/Blockchain_Blockchain/blob/6b4b44aab9c552a3966e6cb2fa18f3faee8469dc/imagines/blokas.png" alt="block_output.txt ištrauka" width="380" />
+</div>
+
+Kad pataisyti šitą kode reikėjo pakeisti šią eilutę
+
+```bash
+bc::encode_base16(merkle_root)
+```
+
+į šią
+
+```bash
+bc::encode_hash(merkle_root)
+
+```
+
+Ir rezultatas gavosi teisingas
+
+---
+
 # Blockchain
 
 ## Turinys

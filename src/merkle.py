@@ -1,19 +1,31 @@
 from src.hashing import aes_hashing
 
-# funkcija Merkle Root Hash apskaiciavimui
-
 def calculate_merkle_root(transactions):
-    tx_hashes = [tx.transaction_id for tx in transactions]
-    if not tx_hashes:
+    # surenkame transakcijų ID
+    merkle = [tx.transaction_id for tx in transactions]
+
+    if not merkle:
         return None
-    while len(tx_hashes) > 1:
-        if len(tx_hashes) % 2 != 0:
-            tx_hashes.append(tx_hashes[-1])
+
+    # kartojame, kol lieka vienas hash
+    while len(merkle) > 1:
+
+        # nelyginis elementų skaičius → duplikuojame paskutinį
+        if len(merkle) % 2 != 0:
+            merkle.append(merkle[-1])
+
         new_level = []
-        for i in range(0, len(tx_hashes), 2):
-            left = bytes.fromhex(tx_hashes[i])
-            right = bytes.fromhex(tx_hashes[i + 1])
+
+        # imam hash'us poromis
+        for i in range(0, len(merkle), 2):
+            left = bytes.fromhex(merkle[i])
+            right = bytes.fromhex(merkle[i+1])
+
             combined = left + right
-            new_level.append(aes_hashing(combined).hex())
-        tx_hashes = new_level
-    return tx_hashes[0]
+
+            new_hash = aes_hashing(combined).hex()
+            new_level.append(new_hash)
+
+        merkle = new_level
+
+    return merkle[0]

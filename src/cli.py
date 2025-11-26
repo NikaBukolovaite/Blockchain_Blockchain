@@ -2,7 +2,7 @@ import sys
 from src.models import generate_users, generate_transactions
 from src.chain import Blockchain
 from src.mining import mine_blockchain, distributed_mining
-from src.paths import out_path  # ⬅️ nauja
+from src.paths import out_path
 
 def parse_flags(argv):
     # Paprastas flag'ų parsinimas: --append, --overwrite, --users=N, --tx=N, --block-size=N, --difficulty=N, --print-txs, --tx-preview=N

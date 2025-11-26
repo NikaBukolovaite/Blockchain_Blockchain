@@ -92,7 +92,7 @@ class Transaction:
         return aes_hashing(serialized).hex()
 
     def generate_transaction(self):
-        # pakeista logika: čia UTXO NEUŽRAŠOM – tik parenkame inputs ir suformuojame outputs (įskaitant grąžą)
+        # čia UTXO NEUŽRAŠOM – tik parenkame inputs ir suformuojame outputs (įskaitant grąžą)
         remaining_amount = self.amount
         available_utxos = self.sender.get_utxos()
         total_utxo_value = sum(value for _, value in available_utxos)
